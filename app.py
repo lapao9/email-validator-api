@@ -1,3 +1,4 @@
+import os
 import re
 import smtplib
 import socket
@@ -52,6 +53,10 @@ def init_db():
     """)
     conn.commit()
     conn.close()
+
+# Inicializa a base de dados ao arrancar a aplicação
+with app.app_context():
+    init_db()
 
 def get_db():
     conn = sqlite3.connect(DB)
@@ -298,6 +303,10 @@ def create_key():
 
     return jsonify({"api_key": new_key, "plan": plan}), 201
 
+#if __name__ == "__main__":
+#    init_db()
+#    app.run(debug=True, port=5000)
+
 if __name__ == "__main__":
-    init_db()
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
