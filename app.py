@@ -74,9 +74,19 @@ PLAN_LIMITS = {
 def require_api_key(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        key = request.headers.get("X-API-Key") or request.args.get("api_key")
+        #key = request.headers.get("X-API-Key") or request.args.get("api_key")
+        key = (
+            request.headers.get("X-RapidAPI-Key") or
+            request.headers.get("X-API-Key") or
+            request.args.get("api_key")
+        )
         if not key:
             return jsonify({"error": "API key em falta. Passa no header X-API-Key."}), 401
+        # Se vier do RapidAPI, aceita diretamente
+        if request.headers.get("X-RapidAPI-Proxy-Secret") == "f0389160-380f-11f1-8488-e380a0753a4d":
+            request.api_key = key
+            request.plan = "basic"  # ou define por plano
+            return f(*args, **kwargs)
 
         db = get_db()
         row = db.execute("SELECT * FROM api_keys WHERE key = ?", (key,)).fetchone()
@@ -282,6 +292,8 @@ def health():
 ADMIN_SECRET = "admin123"
 # ev_PfxQSrpt61F3EbxKvp_A1KE2UTAyG7Qt  --> 1ª chave para testar
 # curl "http://localhost:5000/validate?email=teste@gmail.com&api_key=ev_PfxQSrpt61F3EbxKvp_A1KE2UTAyG7Qt"
+# ev_QOd9PhZK-dGRRbQfXxbufW_erjCK-R3R  --> 2ª chave para testar
+# curl "http://localhost:5000/validate?email=teste@gmail.com&api_key=ev_QOd9PhZK-dGRRbQfXxbufW_erjCK-R3R"
 
 @app.route("/admin/keys", methods=["POST"])
 def create_key():
